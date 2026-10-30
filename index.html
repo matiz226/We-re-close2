@@ -1,0 +1,1396 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0d0b14" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Мы Рядом" />
+  <title>Мы Рядом ❤️ — Виджет и приложение для пар</title>
+
+  <!-- Встроенный манифест для запуска без адресной строки (PWA / APK) -->
+  <link rel="manifest" href='data:application/manifest+json,{"name":"Мы Рядом ❤️","short_name":"Мы Рядом","start_url":".","display":"standalone","background_color":"#0d0b14","theme_color":"#0d0b14","orientation":"portrait"}' />
+
+  <style>
+    :root {
+      --bg: #0d0b14;
+      --card: #171422;
+      --card-2: #1f1b2e;
+      --border: rgba(255, 255, 255, 0.08);
+      --pink: #ff3b7f;
+      --pink-soft: rgba(255, 59, 127, 0.16);
+      --green: #2ecc71;
+      --green-soft: rgba(46, 204, 113, 0.16);
+      --text: #ffffff;
+      --muted: #9b95b0;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      padding-bottom: 92px;
+      overflow-x: hidden;
+    }
+
+    /* ВЕРХНЯЯ ШАПКА */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px 10px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(13, 11, 20, 0.88);
+      backdrop-filter: blur(14px);
+    }
+
+    .pair-pill, .streak-pill {
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: transform 0.12s ease;
+    }
+
+    .pair-pill:active, .streak-pill:active {
+      transform: scale(0.96);
+    }
+
+    .container {
+      padding: 0 16px;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    .tab-page {
+      display: none;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .tab-page.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ПЕРЕКЛЮЧАТЕЛЬ РЕЖИМА ВИДЖЕТА */
+    .mode-switch {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      background: var(--card);
+      padding: 5px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      margin-bottom: 14px;
+    }
+
+    .mode-btn {
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 14px;
+      padding: 10px;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+
+    .mode-btn.active {
+      background: var(--pink);
+      color: #fff;
+    }
+
+    /* БОЛЬШОЙ ВИДЖЕТ ГЛАВНОГО ЭКРАНА */
+    .hero-widget {
+      background: linear-gradient(145deg, #1b162a, #13101d);
+      border: 1px solid rgba(255, 59, 127, 0.22);
+      border-radius: 26px;
+      padding: 14px;
+      display: grid;
+      grid-template-columns: 1.05fr 1fr;
+      gap: 12px;
+      margin-bottom: 14px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    }
+
+    .doodle-preview-box {
+      background: #120f1d;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      position: relative;
+      height: 156px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .doodle-preview-box canvas {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .doodle-time-tag {
+      position: absolute;
+      top: 8px;
+      left: 10px;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 3px 8px;
+      border-radius: 99px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .doodle-react-btn {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      background: rgba(255, 59, 127, 0.2);
+      border: 1px solid rgba(255, 59, 127, 0.4);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .hero-right-col {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .mini-stat-pill {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 10px 11px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: pointer;
+    }
+
+    /* ДВА КВАДРАТНЫХ ВИДЖЕТА */
+    .square-widgets-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .sq-widget {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 16px;
+      position: relative;
+      cursor: pointer;
+      transition: transform 0.12s ease;
+    }
+
+    .sq-widget:active {
+      transform: scale(0.98);
+    }
+
+    .sq-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .big-emoji {
+      font-size: 32px;
+    }
+
+    .bat-badge {
+      background: var(--green-soft);
+      color: var(--green);
+      font-weight: 800;
+      font-size: 12px;
+      padding: 4px 9px;
+      border-radius: 99px;
+    }
+
+    .edit-hint-badge {
+      font-size: 11px;
+      color: var(--muted);
+      background: rgba(255,255,255,0.06);
+      padding: 3px 8px;
+      border-radius: 99px;
+    }
+
+    .sq-title {
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .sq-sub {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 12px;
+      min-height: 18px;
+    }
+
+    .sq-foot {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--pink);
+    }
+
+    .days-big {
+      font-size: 28px;
+      font-weight: 900;
+      margin: 6px 0 4px;
+    }
+
+    /* ЭКРАН БЛОКИРОВКИ ПРЕВЬЮ */
+    .lock-preview {
+      display: none;
+      background: linear-gradient(180deg, #1b1528, #110e1a);
+      border: 1px solid var(--border);
+      border-radius: 26px;
+      padding: 20px 16px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .lock-inline {
+      font-size: 13px;
+      color: #d6d1e8;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .lock-clock {
+      font-size: 56px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      line-height: 1;
+      margin-bottom: 18px;
+    }
+
+    .lock-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .lock-circle {
+      width: 66px;
+      height: 66px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.07);
+      border: 2px solid rgba(255, 59, 127, 0.5);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .lock-rect {
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 10px 14px;
+      text-align: left;
+      flex: 1;
+      max-width: 190px;
+      font-size: 12px;
+    }
+
+    /* СЕКЦИИ И ЧИПСЫ */
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 18px 0 10px;
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 800;
+    }
+
+    .btn-small {
+      background: var(--card-2);
+      color: #fff;
+      border: 1px solid var(--border);
+      padding: 7px 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .chips-scroll {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+      scrollbar-width: none;
+    }
+
+    .chips-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    .chip {
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .chip.active {
+      background: var(--pink);
+      border-color: var(--pink);
+      color: #fff;
+    }
+
+    /* КАРТОЧКИ ОТСЧЁТОВ И СПИСКОВ */
+    .list-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      gap: 10px;
+    }
+
+    .list-card.pinned {
+      border-color: rgba(255, 59, 127, 0.5);
+      background: linear-gradient(90deg, rgba(255, 59, 127, 0.12), var(--card));
+    }
+
+    .list-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+      cursor: pointer;
+    }
+
+    .item-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .icon-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border);
+      color: #fff;
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    /* ДУДЛЫ */
+    .canvas-wrap {
+      background: #14111f;
+      border: 2px solid rgba(255, 59, 127, 0.35);
+      border-radius: 26px;
+      height: 320px;
+      position: relative;
+      overflow: hidden;
+      margin: 12px 0;
+      touch-action: none;
+    }
+
+    .canvas-wrap canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .palette-row {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      background: var(--card);
+      padding: 12px;
+      border-radius: 99px;
+      border: 1px solid var(--border);
+    }
+
+    .color-dot {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 3px solid transparent;
+    }
+
+    .color-dot.active {
+      border-color: #fff;
+      transform: scale(1.12);
+    }
+
+    /* НИЖНЯЯ НАВИГАЦИЯ */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(18, 15, 28, 0.94);
+      backdrop-filter: blur(16px);
+      border-top: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      padding: 8px 6px calc(8px + env(safe-area-inset-bottom));
+      z-index: 100;
+    }
+
+    .nav-item {
+      background: none;
+      border: none;
+      color: var(--muted);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 4px 0;
+    }
+
+    .nav-item .nav-icon {
+      font-size: 20px;
+    }
+
+    .nav-item.active {
+      color: var(--pink);
+    }
+
+    /* ВСТРОЕННЫЕ МОДАЛЬНЫЕ ОКНА (ВМЕСТО БРАУЗЕРНЫХ PROMPT) */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.72);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 200;
+    }
+
+    .modal-overlay.open {
+      display: flex;
+    }
+
+    .modal-box {
+      background: #191526;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 24px;
+      width: 100%;
+      max-width: 400px;
+      padding: 20px;
+      max-height: 88vh;
+      overflow-y: auto;
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 800;
+      margin: 0 0 14px;
+    }
+
+    .field-group {
+      margin-bottom: 12px;
+    }
+
+    .field-label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+
+    .field-input {
+      width: 100%;
+      background: #110e1a;
+      border: 1px solid var(--border);
+      color: #fff;
+      padding: 11px 13px;
+      border-radius: 12px;
+      font-size: 15px;
+      outline: none;
+    }
+
+    .field-input:focus {
+      border-color: var(--pink);
+    }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .btn-primary, .btn-secondary {
+      flex: 1;
+      padding: 12px;
+      border-radius: 14px;
+      font-weight: 800;
+      font-size: 14px;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      background: var(--pink);
+      color: #fff;
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ВЕРХНЯЯ ПАНЕЛЬ -->
+  <header class="topbar">
+    <div class="pair-pill" onclick="openSettingsModal()">
+      ❤️ <span id="coupleTitle">Матвей & Полина</span> ⚙️
+    </div>
+    <div class="streak-pill" onclick="openSettingsModal()">
+      🔥 <span id="streakText">24 дн.</span>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- ВКЛАДКА 0: ВИДЖЕТЫ -->
+    <section class="tab-page active" id="tab0">
+      <div class="mode-switch">
+        <button class="mode-btn active" id="btnModeHome" onclick="setWidgetPreviewMode('home')">📱 Главный экран</button>
+        <button class="mode-btn" id="btnModeLock" onclick="setWidgetPreviewMode('lock')">🔒 Экран блокировки</button>
+      </div>
+
+      <!-- Виджеты главного экрана -->
+      <div id="homeWidgetsBox">
+        <div class="hero-widget">
+          <div class="doodle-preview-box" onclick="switchTab(1)">
+            <canvas id="widgetDoodleCanvas" width="240" height="200"></canvas>
+            <div class="doodle-time-tag">🎨 <span id="widgetDoodleTime">18:45</span></div>
+            <div class="doodle-react-btn" id="widgetReactionBtn" onclick="event.stopPropagation(); toggleWidgetReaction()">❤️</div>
+          </div>
+          <div class="hero-right-col">
+            <div class="mini-stat-pill" id="smCdTitle" onclick="scrollToCountdowns()">✈️ 14 дн. Встреча в аэропорту</div>
+            <div class="mini-stat-pill" onclick="openSettingsModal()">
+              <span id="smMoodEmoji">🥰</span> 🔋<span id="smBatteryTag">84%</span> 📍<span id="smDistTag">640 км</span>
+            </div>
+            <div class="mini-stat-pill" id="wChallengeStatus" onclick="switchTab(2)">🔐 Вопрос дня ждёт</div>
+          </div>
+        </div>
+
+        <div class="square-widgets-grid">
+          <!-- Карточка партнёра (нажатие открывает редактор) -->
+          <div class="sq-widget" onclick="openSettingsModal()">
+            <div class="sq-top">
+              <span class="big-emoji" id="wPartnerEmoji">🥰</span>
+              <span class="bat-badge" id="wPartnerBattery">⚡ 84%</span>
+            </div>
+            <div class="sq-title" id="wPartnerName">Полина</div>
+            <div class="sq-sub" id="wPartnerMoodText">Жду вечернего созвона</div>
+            <div class="sq-foot" id="wDistance">📍 Между вами 640 км ✏️</div>
+          </div>
+
+          <!-- Карточка обратного отсчёта -->
+          <div class="sq-widget" onclick="scrollToCountdowns()">
+            <div class="sq-top">
+              <span class="big-emoji" id="wCountdownEmoji">✈️</span>
+              <span class="edit-hint-badge">✏️ Событие</span>
+            </div>
+            <div class="days-big" id="wCountdownDays">14 дней</div>
+            <div class="sq-sub" id="wCountdownTitle">Встреча в аэропорту</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Превью экрана блокировки -->
+      <div class="lock-preview" id="lockWidgetsBox" onclick="openSettingsModal()">
+        <div class="lock-inline" id="lockInline">❤️ 14 дн. • 🔋 84% • 📍 640 км</div>
+        <div class="lock-clock">09:41</div>
+        <div class="lock-row">
+          <div class="lock-circle">
+            <span id="lockCircEmoji" style="font-size:18px">🥰</span>
+            <span id="lockCircBat">84%</span>
+          </div>
+          <div class="lock-circle">
+            <span style="font-size:16px">❤️</span>
+            <span id="lockCircDays">14 дн.</span>
+          </div>
+          <div class="lock-rect">
+            <div style="font-weight:800" id="lockRectName">🥰 Полина</div>
+            <div style="color:var(--muted); margin:2px 0" id="lockRectMeta">🔋84% • 📍 640 км</div>
+            <div style="color:var(--pink); font-weight:700" id="lockRectCd">До встречи: 14 дн.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Настроение и заряд -->
+      <div class="section-head">
+        <div class="section-title">Ваше настроение и заряд (🔋 <span id="myRealBatteryLabel">100%</span> ⚡):</div>
+      </div>
+      <div class="chips-scroll" id="moodBox"></div>
+
+      <!-- Обратные отсчёты -->
+      <div class="section-head" id="countdownsSection">
+        <div class="section-title">Обратные отсчёты ⏳</div>
+        <button class="btn-small" onclick="openCountdownModal()">+ Добавить</button>
+      </div>
+      <div id="countdownsList"></div>
+    </section>
+
+    <!-- ВКЛАДКА 1: ДУДЛЫ -->
+    <section class="tab-page" id="tab1">
+      <div class="section-head">
+        <div class="section-title">Визуальный диалог 🎨</div>
+        <div style="display:flex; gap:6px">
+          <button class="btn-small" onclick="undoStroke()">↩️ Назад</button>
+          <button class="btn-small" onclick="clearMyDoodle()">🗑️ Очистить</button>
+        </div>
+      </div>
+      <div class="chips-scroll" id="doodleReactionsRow"></div>
+      <div class="canvas-wrap">
+        <canvas id="partnerCanvas" width="360" height="320"></canvas>
+        <canvas id="myCanvas" width="360" height="320"></canvas>
+      </div>
+      <div class="palette-row" id="colorPaletteRow"></div>
+    </section>
+
+    <!-- ВКЛАДКА 2: ЧЕЛЛЕНДЖ -->
+    <section class="tab-page" id="tab2">
+      <div class="section-head">
+        <div class="section-title">Вопрос дня 🔐</div>
+        <button class="btn-small" onclick="openChallengeModal()">✏️ Изменить вопрос</button>
+      </div>
+      <div class="list-card" style="flex-direction:column; align-items:stretch">
+        <div style="font-weight:800; font-size:16px; margin-bottom:12px" id="challengePromptText"></div>
+        <div id="challengeOptionsBox" style="display:flex; flex-direction:column; gap:8px"></div>
+        <div id="challengeAnswersBox" style="margin-top:14px; padding-top:12px; border-top:1px solid var(--border); font-size:13px"></div>
+      </div>
+    </section>
+
+    <!-- ВКЛАДКА 3: МЕЧТЫ -->
+    <section class="tab-page" id="tab3">
+      <div class="section-head">
+        <div class="section-title">Наши мечты и планы ✨</div>
+        <button class="btn-small" onclick="openWishModal()">+ Новое желание</button>
+      </div>
+      <div class="chips-scroll" id="boardsRow" style="margin-bottom:12px"></div>
+      <div id="wishesList"></div>
+    </section>
+
+    <!-- ВКЛАДКА 4: ЗАМЕТКИ -->
+    <section class="tab-page" id="tab4">
+      <div class="section-head">
+        <div class="section-title">Общие заметки 📝</div>
+        <button class="btn-small" onclick="openNoteModal()">+ Добавить</button>
+      </div>
+      <div id="regularNotesList"></div>
+    </section>
+  </main>
+
+  <!-- НИЖНЯЯ ПАНЕЛЬ НАВИГАЦИИ -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" onclick="switchTab(0)">
+      <span class="nav-icon">📱</span><span>Виджеты</span>
+    </button>
+    <button class="nav-item" onclick="switchTab(1)">
+      <span class="nav-icon">🎨</span><span>Дудлы</span>
+    </button>
+    <button class="nav-item" onclick="switchTab(2)">
+      <span class="nav-icon">🔐</span><span>Челлендж</span>
+    </button>
+    <button class="nav-item" onclick="switchTab(3)">
+      <span class="nav-icon">✨</span><span>Мечты</span>
+    </button>
+    <button class="nav-item" onclick="switchTab(4)">
+      <span class="nav-icon">📝</span><span>Заметки</span>
+    </button>
+  </nav>
+
+  <!-- МОДАЛЬНОЕ ОКНО: ГЛАВНЫЕ НАСТРОЙКИ ПАРЫ И ПАРТНЁРА -->
+  <div class="modal-overlay" id="settingsModal">
+    <div class="modal-box">
+      <h3 class="modal-title">⚙️ Настройки пары и виджета</h3>
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-label">Ваше имя</label>
+          <input class="field-input" id="inpMyName" type="text" />
+        </div>
+        <div class="field-group">
+          <label class="field-label">Имя партнёра</label>
+          <input class="field-input" id="inpPartnerName" type="text" />
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-label">Эмодзи партнёра</label>
+          <input class="field-input" id="inpPartnerEmoji" type="text" />
+        </div>
+        <div class="field-group">
+          <label class="field-label">Заряд партнёра (%)</label>
+          <input class="field-input" id="inpPartnerBattery" type="number" min="1" max="100" />
+        </div>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Статус партнёра (текст на виджете)</label>
+        <input class="field-input" id="inpPartnerMood" type="text" />
+      </div>
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-label">Расстояние (км)</label>
+          <input class="field-input" id="inpDistance" type="number" min="0" />
+        </div>
+        <div class="field-group">
+          <label class="field-label">Дней подряд (🔥)</label>
+          <input class="field-input" id="inpStreak" type="number" min="1" />
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="closeModal('settingsModal')">Отмена</button>
+        <button class="btn-primary" onclick="saveSettingsModal()">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- МОДАЛЬНОЕ ОКНО: СВОЙ СТАТУС -->
+  <div class="modal-overlay" id="customMoodModal">
+    <div class="modal-box">
+      <h3 class="modal-title">✏️ Свой статус настроения</h3>
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-label">Эмодзи</label>
+          <input class="field-input" id="inpMyCustomEmoji" type="text" value="✨" />
+        </div>
+        <div class="field-group">
+          <label class="field-label">Текст статуса</label>
+          <input class="field-input" id="inpMyCustomText" type="text" placeholder="Думаю о тебе" />
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="closeModal('customMoodModal')">Отмена</button>
+        <button class="btn-primary" onclick="saveCustomMood()">Установить</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- МОДАЛЬНОЕ ОКНО: ДОБАВИТЬ / ИЗМЕНИТЬ ОТСЧЁТ -->
+  <div class="modal-overlay" id="countdownModal">
+    <div class="modal-box">
+      <h3 class="modal-title" id="cdModalHeader">⏳ Событие</h3>
+      <input type="hidden" id="inpCdId" />
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-label">Эмодзи</label>
+          <input class="field-input" id="inpCdEmoji" type="text" value="✈️" />
+        </div>
+        <div class="field-group">
+          <label class="field-label">Через сколько дней</label>
+          <input class="field-input" id="inpCdDays" type="number" value="14" />
+        </div>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Название события</label>
+        <input class="field-input" id="inpCdTitle" type="text" placeholder="Встреча в аэропорту" />
+      </div>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="closeModal('countdownModal')">Отмена</button>
+        <button class="btn-primary" onclick="saveCountdownModal()">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- МОДАЛЬНОЕ ОКНО: УНИВЕРСАЛЬНОЕ (МЕЧТЫ / ЗАМЕТКИ / ВОПРОС) -->
+  <div class="modal-overlay" id="itemModal">
+    <div class="modal-box">
+      <h3 class="modal-title" id="itemModalTitle">Добавить</h3>
+      <input type="hidden" id="itemModalMode" />
+      <input type="hidden" id="itemModalId" />
+      <div class="field-group">
+        <label class="field-label" id="itemModalLabel1">Название</label>
+        <input class="field-input" id="itemModalInput1" type="text" />
+      </div>
+      <div class="field-group" id="itemModalGroup2">
+        <label class="field-label" id="itemModalLabel2">Описание / Детали</label>
+        <input class="field-input" id="itemModalInput2" type="text" />
+      </div>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="closeModal('itemModal')">Отмена</button>
+        <button class="btn-primary" onclick="saveItemModal()">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'couple_super_app_state_v2';
+
+    const defaultState = {
+      myName: 'Матвей',
+      partnerName: 'Полина',
+      streakDays: 24,
+      myMoodEmoji: '🔥',
+      myMoodText: 'В работе',
+      partnerMoodEmoji: '🥰',
+      partnerMoodText: 'Жду вечернего созвона',
+      partnerBattery: 84,
+      distanceKm: 640,
+      doodleTime: '18:45',
+      doodleReaction: '❤️',
+      doodleStrokes: [],
+      countdowns: [
+        { id: 'c1', emoji: '✈️', title: 'Встреча в аэропорту', days: 14, pinned: true },
+        { id: 'c2', emoji: '🏔️', title: 'Зимняя поездка вдвоём', days: 64, pinned: false },
+        { id: 'c3', emoji: '💍', title: 'Годовщина отношений', days: 109, pinned: false }
+      ],
+      todayChallenge: {
+        prompt: 'Идеальный вечер после долгой разлуки:',
+        options: [
+          'Домашний уют, пицца и сериал в обнимку 🍕',
+          'Ночная прогулка по городу и горячий чай 🍵',
+          'Пойти в красивое место на свидание ✨'
+        ],
+        myAnswer: null,
+        partnerAnswer: 'Ночная прогулка по городу и горячий чай 🍵'
+      },
+      boards: [
+        { id: 'b_trips', emoji: '✈️', title: 'Поездки' },
+        { id: 'b_food', emoji: '🍵', title: 'Еда и чай' },
+        { id: 'b_movies', emoji: '🎬', title: 'Фильмы' }
+      ],
+      activeBoardId: 'b_trips',
+      wishes: [
+        { id: 'w1', boardId: 'b_trips', title: 'Увидеть северное сияние в Териберке', sub: 'Домик с панорамной крышей', done: false },
+        { id: 'w2', boardId: 'b_trips', title: 'Выходные в Казани с чайной дегустацией', sub: 'Найти уютную чайную с блинами пуэра', done: false }
+      ],
+      notes: [
+        { id: 'n1', title: 'Идеи подарков 🎁', text: 'Тёплый шарф, набор хорошего чая, парные браслеты' },
+        { id: 'n2', title: 'Фильмы на вечер 🍿', text: 'Интерстеллар, Ла-Ла Ленд, Бойфренд из будущего' }
+      ]
+    };
+
+    let state = JSON.parse(localStorage.getItem(STORAGE_KEY)) || defaultState;
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      renderAll();
+    }
+
+    // Чтение реального заряда телефона
+    if ('getBattery' in navigator) {
+      navigator.getBattery().then(bat => {
+        const updateBat = () => {
+          document.getElementById('myRealBatteryLabel').textContent = Math.round(bat.level * 100) + '%';
+        };
+        updateBat();
+        bat.addEventListener('levelchange', updateBat);
+      });
+    }
+
+    const moodPresets = [
+      ['🔥', 'В работе'],
+      ['🥺', 'Скучаю по тебе'],
+      ['🍵', 'Пью пуэр'],
+      ['😴', 'Хочу спать'],
+      ['🎧', 'В наушниках']
+    ];
+
+    function switchTab(idx) {
+      document.querySelectorAll('.tab-page').forEach((el, i) => el.classList.toggle('active', i === idx));
+      document.querySelectorAll('.nav-item').forEach((el, i) => el.classList.toggle('active', i === idx));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (idx === 1) exportCompositeToWidgets();
+    }
+
+    function setWidgetPreviewMode(mode) {
+      document.getElementById('btnModeHome').classList.toggle('active', mode === 'home');
+      document.getElementById('btnModeLock').classList.toggle('active', mode === 'lock');
+      document.getElementById('homeWidgetsBox').style.display = mode === 'home' ? 'block' : 'none';
+      document.getElementById('lockWidgetsBox').style.display = mode === 'lock' ? 'block' : 'none';
+    }
+
+    function scrollToCountdowns() {
+      switchTab(0);
+      document.getElementById('countdownsSection').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('open');
+    }
+
+    // --- ГЛАВНЫЕ НАСТРОЙКИ ПАРЫ ---
+    function openSettingsModal() {
+      document.getElementById('inpMyName').value = state.myName;
+      document.getElementById('inpPartnerName').value = state.partnerName;
+      document.getElementById('inpPartnerEmoji').value = state.partnerMoodEmoji;
+      document.getElementById('inpPartnerBattery').value = state.partnerBattery;
+      document.getElementById('inpPartnerMood').value = state.partnerMoodText;
+      document.getElementById('inpDistance').value = state.distanceKm;
+      document.getElementById('inpStreak').value = state.streakDays;
+      document.getElementById('settingsModal').classList.add('open');
+    }
+
+    function saveSettingsModal() {
+      state.myName = document.getElementById('inpMyName').value.trim() || 'Я';
+      state.partnerName = document.getElementById('inpPartnerName').value.trim() || 'Партнёр';
+      state.partnerMoodEmoji = document.getElementById('inpPartnerEmoji').value.trim() || '🥰';
+      state.partnerBattery = parseInt(document.getElementById('inpPartnerBattery').value) || 84;
+      state.partnerMoodText = document.getElementById('inpPartnerMood').value.trim() || 'На связи';
+      state.distanceKm = parseInt(document.getElementById('inpDistance').value) || 0;
+      state.streakDays = parseInt(document.getElementById('inpStreak').value) || 1;
+      closeModal('settingsModal');
+      saveState();
+    }
+
+    // --- НАСТРОЕНИЕ ---
+    function setMyMood(em, txt) {
+      state.myMoodEmoji = em;
+      state.myMoodText = txt;
+      saveState();
+    }
+
+    function openCustomMoodModal() {
+      document.getElementById('inpMyCustomEmoji').value = state.myMoodEmoji;
+      document.getElementById('inpMyCustomText').value = state.myMoodText;
+      document.getElementById('customMoodModal').classList.add('open');
+    }
+
+    function saveCustomMood() {
+      const em = document.getElementById('inpMyCustomEmoji').value.trim() || '✨';
+      const txt = document.getElementById('inpMyCustomText').value.trim() || 'На связи';
+      closeModal('customMoodModal');
+      setMyMood(em, txt);
+    }
+
+    // --- ОБРАТНЫЕ ОТСЧЁТЫ ---
+    function pinCountdown(id) {
+      state.countdowns.forEach(c => c.pinned = (c.id === id));
+      saveState();
+    }
+
+    function openCountdownModal(id = '') {
+      const existing = state.countdowns.find(c => c.id === id);
+      document.getElementById('inpCdId').value = existing ? existing.id : '';
+      document.getElementById('inpCdEmoji').value = existing ? existing.emoji : '✈️';
+      document.getElementById('inpCdDays').value = existing ? existing.days : 14;
+      document.getElementById('inpCdTitle').value = existing ? existing.title : '';
+      document.getElementById('cdModalHeader').textContent = existing ? '✏️ Изменить событие' : '⏳ Новое событие';
+      document.getElementById('countdownModal').classList.add('open');
+    }
+
+    function saveCountdownModal() {
+      const id = document.getElementById('inpCdId').value;
+      const emoji = document.getElementById('inpCdEmoji').value.trim() || '✨';
+      const days = parseInt(document.getElementById('inpCdDays').value) || 1;
+      const title = document.getElementById('inpCdTitle').value.trim() || 'Событие';
+
+      if (id) {
+        const item = state.countdowns.find(c => c.id === id);
+        if (item) { item.emoji = emoji; item.days = days; item.title = title; }
+      } else {
+        state.countdowns.push({ id: 'c' + Date.now(), emoji, title, days, pinned: state.countdowns.length === 0 });
+      }
+      closeModal('countdownModal');
+      saveState();
+    }
+
+    function deleteCountdown(id) {
+      state.countdowns = state.countdowns.filter(c => c.id !== id);
+      if (state.countdowns.length > 0 && !state.countdowns.some(c => c.pinned)) {
+        state.countdowns[0].pinned = true;
+      }
+      saveState();
+    }
+
+    // --- УНИВЕРСАЛЬНОЕ ОКНО (ВОПРОС ДНЯ / МЕЧТЫ / ЗАМЕТКИ) ---
+    function openChallengeModal() {
+      document.getElementById('itemModalTitle').textContent = '✏️ Изменить вопрос дня';
+      document.getElementById('itemModalMode').value = 'challenge';
+      document.getElementById('itemModalLabel1').textContent = 'Текст вопроса';
+      document.getElementById('itemModalInput1').value = state.todayChallenge.prompt;
+      document.getElementById('itemModalLabel2').textContent = 'Ответ партнёра';
+      document.getElementById('itemModalInput2').value = state.todayChallenge.partnerAnswer;
+      document.getElementById('itemModal').classList.add('open');
+    }
+
+    function openWishModal(id = '') {
+      const w = state.wishes.find(x => x.id === id);
+      document.getElementById('itemModalTitle').textContent = w ? '✏️ Изменить желание' : '✨ Новое желание';
+      document.getElementById('itemModalMode').value = 'wish';
+      document.getElementById('itemModalId').value = w ? w.id : '';
+      document.getElementById('itemModalLabel1').textContent = 'Мечта / План';
+      document.getElementById('itemModalInput1').value = w ? w.title : '';
+      document.getElementById('itemModalLabel2').textContent = 'Комментарий';
+      document.getElementById('itemModalInput2').value = w ? w.sub : '';
+      document.getElementById('itemModal').classList.add('open');
+    }
+
+    function openNoteModal(id = '') {
+      const n = state.notes.find(x => x.id === id);
+      document.getElementById('itemModalTitle').textContent = n ? '✏️ Изменить заметку' : '📝 Новая заметка';
+      document.getElementById('itemModalMode').value = 'note';
+      document.getElementById('itemModalId').value = n ? n.id : '';
+      document.getElementById('itemModalLabel1').textContent = 'Заголовок';
+      document.getElementById('itemModalInput1').value = n ? n.title : '';
+      document.getElementById('itemModalLabel2').textContent = 'Текст заметки';
+      document.getElementById('itemModalInput2').value = n ? n.text : '';
+      document.getElementById('itemModal').classList.add('open');
+    }
+
+    function saveItemModal() {
+      const mode = document.getElementById('itemModalMode').value;
+      const id = document.getElementById('itemModalId').value;
+      const v1 = document.getElementById('itemModalInput1').value.trim();
+      const v2 = document.getElementById('itemModalInput2').value.trim();
+      if (!v1) return;
+
+      if (mode === 'challenge') {
+        state.todayChallenge.prompt = v1;
+        state.todayChallenge.partnerAnswer = v2 || 'Согласна с тобой ❤️';
+        state.todayChallenge.myAnswer = null;
+      } else if (mode === 'wish') {
+        if (id) {
+          const w = state.wishes.find(x => x.id === id);
+          if (w) { w.title = v1; w.sub = v2; }
+        } else {
+          state.wishes.unshift({ id: 'w' + Date.now(), boardId: state.activeBoardId, title: v1, sub: v2, done: false });
+        }
+      } else if (mode === 'note') {
+        if (id) {
+          const n = state.notes.find(x => x.id === id);
+          if (n) { n.title = v1; n.text = v2; }
+        } else {
+          state.notes.unshift({ id: 'n' + Date.now(), title: v1, text: v2 });
+        }
+      }
+      closeModal('itemModal');
+      saveState();
+    }
+
+    function toggleWish(id) {
+      const w = state.wishes.find(x => x.id === id);
+      if (w) w.done = !w.done;
+      saveState();
+    }
+
+    function deleteWish(id) {
+      state.wishes = state.wishes.filter(x => x.id !== id);
+      saveState();
+    }
+
+    function deleteNote(id) {
+      state.notes = state.notes.filter(x => x.id !== id);
+      saveState();
+    }
+
+    function toggleWidgetReaction() {
+      const list = ['❤️', '🥰', '🔥', '💋', '✨'];
+      const next = list[(list.indexOf(state.doodleReaction) + 1) % list.length];
+      state.doodleReaction = next;
+      saveState();
+    }
+
+    // --- РЕНДЕРИНГ ВСЕГО ИНТЕРФЕЙСА ---
+    function renderAll() {
+      document.getElementById('coupleTitle').textContent = `${state.myName} & ${state.partnerName}`;
+      document.getElementById('streakText').textContent = `${state.streakDays} дн.`;
+
+      const cd = state.countdowns.find(c => c.pinned) || state.countdowns[0] || { emoji: '⏳', title: 'Добавьте событие', days: 0 };
+      document.getElementById('wCountdownEmoji').textContent = cd.emoji;
+      document.getElementById('wCountdownDays').textContent = `${cd.days} дней`;
+      document.getElementById('wCountdownTitle').textContent = cd.title;
+
+      document.getElementById('wPartnerEmoji').textContent = state.partnerMoodEmoji;
+      document.getElementById('wPartnerBattery').textContent = `⚡ ${state.partnerBattery}%`;
+      document.getElementById('wPartnerName').textContent = state.partnerName;
+      document.getElementById('wPartnerMoodText').textContent = state.partnerMoodText;
+      document.getElementById('wDistance').textContent = `📍 Между вами ${state.distanceKm} км ✏️`;
+
+      const revealed = Boolean(state.todayChallenge.myAnswer);
+      document.getElementById('wChallengeStatus').textContent = revealed ? '🔓 Ответы открыты!' : '🔐 Вопрос дня ждёт';
+
+      document.getElementById('widgetDoodleTime').textContent = state.doodleTime;
+      document.getElementById('widgetReactionBtn').textContent = state.doodleReaction;
+
+      document.getElementById('smMoodEmoji').textContent = state.partnerMoodEmoji;
+      document.getElementById('smBatteryTag').textContent = `${state.partnerBattery}%`;
+      document.getElementById('smDistTag').textContent = `${state.distanceKm} км`;
+      document.getElementById('smCdTitle').textContent = `${cd.emoji} ${cd.days} дн. ${cd.title}`;
+
+      // Экран блокировки
+      document.getElementById('lockInline').textContent = `❤️ ${cd.days} дн. • 🔋 ${state.partnerBattery}% • 📍 ${state.distanceKm} км`;
+      document.getElementById('lockCircEmoji').textContent = state.partnerMoodEmoji;
+      document.getElementById('lockCircBat').textContent = `${state.partnerBattery}%`;
+      document.getElementById('lockCircDays').textContent = `${cd.days} дн.`;
+      document.getElementById('lockRectName').textContent = `${state.partnerMoodEmoji} ${state.partnerName}`;
+      document.getElementById('lockRectMeta').textContent = `🔋${state.partnerBattery}% • 📍 ${state.distanceKm} км`;
+      document.getElementById('lockRectCd').textContent = `До встречи: ${cd.days} дн.`;
+
+      // Чипсы настроения
+      const isCustom = !moodPresets.some(p => p[0] === state.myMoodEmoji && p[1] === state.myMoodText);
+      document.getElementById('moodBox').innerHTML = moodPresets.map(([em, txt]) => {
+        const act = (state.myMoodEmoji === em && state.myMoodText === txt) ? 'active' : '';
+        return `<button class="chip ${act}" onclick="setMyMood('${em}','${txt}')">${em} ${txt}</button>`;
+      }).join('') + `<button class="chip ${isCustom ? 'active' : ''}" onclick="openCustomMoodModal()">✏️ ${isCustom ? state.myMoodEmoji + ' ' + state.myMoodText : 'Свой статус...'}</button>`;
+
+      // Список отсчётов
+      document.getElementById('countdownsList').innerHTML = state.countdowns.map(item => `
+        <div class="list-card ${item.pinned ? 'pinned' : ''}">
+          <div class="list-left" onclick="pinCountdown('${item.id}')">
+            <span style="font-size:26px">${item.emoji}</span>
+            <div>
+              <div style="font-weight:700; font-size:15px">${item.title}</div>
+              <div style="font-size:11px; color:${item.pinned ? 'var(--pink)' : 'var(--muted)'}">
+                ${item.pinned ? '📌 Закреплен на виджете' : 'Нажмите, чтобы вывести на виджет'}
+              </div>
+            </div>
+          </div>
+          <div class="item-actions">
+            <span style="font-size:18px; font-weight:900; color:var(--pink); margin-right:6px">${item.days} дн.</span>
+            <button class="icon-btn" onclick="openCountdownModal('${item.id}')">✏️</button>
+            <button class="icon-btn" onclick="deleteCountdown('${item.id}')">🗑️</button>
+          </div>
+        </div>
+      `).join('');
+
+      // Челлендж
+      document.getElementById('challengePromptText').textContent = state.todayChallenge.prompt;
+      document.getElementById('challengeOptionsBox').innerHTML = state.todayChallenge.options.map(opt => {
+        const sel = state.todayChallenge.myAnswer === opt ? 'active' : '';
+        return `<button class="chip ${sel}" style="text-align:left; white-space:normal" onclick="state.todayChallenge.myAnswer='${opt}'; saveState()">${opt}</button>`;
+      }).join('');
+      document.getElementById('challengeAnswersBox').innerHTML = state.todayChallenge.myAnswer
+        ? `<div><b>${state.myName}:</b> ${state.todayChallenge.myAnswer}</div><div style="margin-top:6px; color:var(--pink)"><b>${state.partnerName}:</b> ${state.todayChallenge.partnerAnswer}</div>`
+        : `<div style="color:var(--muted)">Выберите вариант выше, чтобы открыть ответ партнёра (${state.partnerName})</div>`;
+
+      // Мечты
+      document.getElementById('boardsRow').innerHTML = state.boards.map(b => `
+        <button class="chip ${state.activeBoardId === b.id ? 'active' : ''}" onclick="state.activeBoardId='${b.id}'; saveState()">${b.emoji} ${b.title}</button>
+      `).join('');
+
+      document.getElementById('wishesList').innerHTML = state.wishes
+        .filter(w => w.boardId === state.activeBoardId)
+        .map(w => `
+          <div class="list-card">
+            <div class="list-left" onclick="toggleWish('${w.id}')">
+              <span style="font-size:20px">${w.done ? '✅' : '⭕'}</span>
+              <div>
+                <div style="font-weight:700; text-decoration:${w.done ? 'line-through' : 'none'}">${w.title}</div>
+                <div style="font-size:12px; color:var(--muted)">${w.sub || ''}</div>
+              </div>
+            </div>
+            <div class="item-actions">
+              <button class="icon-btn" onclick="openWishModal('${w.id}')">✏️</button>
+              <button class="icon-btn" onclick="deleteWish('${w.id}')">🗑️</button>
+            </div>
+          </div>
+        `).join('');
+
+      // Заметки
+      document.getElementById('regularNotesList').innerHTML = state.notes.map(n => `
+        <div class="list-card">
+          <div class="list-left" onclick="openNoteModal('${n.id}')">
+            <div>
+              <div style="font-weight:800; font-size:15px; margin-bottom:4px">${n.title}</div>
+              <div style="font-size:13px; color:var(--muted)">${n.text}</div>
+            </div>
+          </div>
+          <div class="item-actions">
+            <button class="icon-btn" onclick="openNoteModal('${n.id}')">✏️</button>
+            <button class="icon-btn" onclick="deleteNote('${n.id}')">🗑️</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // --- РИСОВАНИЕ ДУДЛОВ ---
+    const partnerCanvas = document.getElementById('partnerCanvas');
+    const partnerCtx = partnerCanvas.getContext('2d');
+    const myCanvas = document.getElementById('myCanvas');
+    const myCtx = myCanvas.getContext('2d');
+    const paletteColors = ['#FF3B7F', '#FF9F43', '#FECA57', '#1DD1A1', '#54A0FF', '#A55EEA', '#FFFFFF'];
+    let currentColor = '#FF3B7F';
+    let myStrokes = state.doodleStrokes || [];
+    let activePoints = [];
+    let isDrawing = false;
+
+    function initDoodleStudio() {
+      document.getElementById('colorPaletteRow').innerHTML = paletteColors.map(c => `
+        <div class="color-dot ${c === currentColor ? 'active' : ''}" style="background:${c}" onclick="selectColor('${c}')"></div>
+      `).join('');
+
+      const emojis = ['❤️', '🥰', '😂', '🔥', '💋', '✨'];
+      document.getElementById('doodleReactionsRow').innerHTML = emojis.map(e => `
+        <button class="chip ${state.doodleReaction === e ? 'active' : ''}" onclick="state.doodleReaction='${e}'; saveState()">${e}</button>
+      `).join('');
+
+      drawPartnerBaseHeart();
+      redrawMyLayer();
+      exportCompositeToWidgets();
+    }
+
+    function selectColor(c) {
+      currentColor = c;
+      initDoodleStudio();
+    }
+
+    function drawPartnerBaseHeart() {
+      partnerCtx.clearRect(0, 0, 360, 320);
+      partnerCtx.save();
+      partnerCtx.strokeStyle = 'rgba(255, 59, 127, 0.55)';
+      partnerCtx.lineWidth = 12;
+      partnerCtx.lineCap = 'round';
+      partnerCtx.lineJoin = 'round';
+      partnerCtx.beginPath();
+      partnerCtx.moveTo(180, 115);
+      partnerCtx.bezierCurveTo(120, 55, 55, 130, 180, 235);
+      partnerCtx.bezierCurveTo(305, 130, 240, 55, 180, 115);
+      partnerCtx.stroke();
+      partnerCtx.restore();
+    }
+
+    function redrawMyLayer() {
+      myCtx.clearRect(0, 0, 360, 320);
+      myStrokes.forEach(s => drawStroke(myCtx, s.color, s.points));
+      if (activePoints.length > 1) drawStroke(myCtx, currentColor, activePoints);
+    }
+
+    function drawStroke(ctx, color, pts) {
+      if (pts.length < 2) return;
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 8;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y);
+      for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function getPos(e) {
+      const r = myCanvas.getBoundingClientRect();
+      const t = e.touches ? e.touches[0] : e;
+      return {
+        x: (t.clientX - r.left) * (myCanvas.width / r.width),
+        y: (t.clientY - r.top) * (myCanvas.height / r.height)
+      };
+    }
+
+    myCanvas.addEventListener('pointerdown', e => {
+      isDrawing = true;
+      activePoints = [getPos(e)];
+    });
+    myCanvas.addEventListener('pointermove', e => {
+      if (!isDrawing) return;
+      activePoints.push(getPos(e));
+      redrawMyLayer();
+    });
+    window.addEventListener('pointerup', () => {
+      if (!isDrawing) return;
+      isDrawing = false;
+      if (activePoints.length > 1) {
+        myStrokes.push({ color: currentColor, points: activePoints });
+        state.doodleStrokes = myStrokes;
+        const now = new Date();
+        state.doodleTime = now.toTimeString().slice(0, 5);
+        saveState();
+        exportCompositeToWidgets();
+      }
+      activePoints = [];
+    });
+
+    function undoStroke() {
+      myStrokes.pop();
+      state.doodleStrokes = myStrokes;
+      redrawMyLayer();
+      exportCompositeToWidgets();
+      saveState();
+    }
+
+    function clearMyDoodle() {
+      myStrokes = [];
+      state.doodleStrokes = [];
+      redrawMyLayer();
+      exportCompositeToWidgets();
+      saveState();
+    }
+
+    function exportCompositeToWidgets() {
+      const wCanvas = document.getElementById('widgetDoodleCanvas');
+      const wCtx = wCanvas.getContext('2d');
+      wCtx.clearRect(0, 0, wCanvas.width, wCanvas.height);
+      wCtx.drawImage(partnerCanvas, 0, 0, wCanvas.width, wCanvas.height);
+      wCtx.drawImage(myCanvas, 0, 0, wCanvas.width, wCanvas.height);
+    }
+
+    renderAll();
+    initDoodleStudio();
+  </script>
+</body>
+</html>
